@@ -6,10 +6,14 @@ The board integrates the essential sensors and power systems required for stabil
 This project includes:
 
 Full schematic (KiCad)
+![Schematic](/images/schematic.png)
 
 Board layout
+![3d](/images/Screenshot%202025-11-28%20233438.png)
 
 Bill of materials
+![bill1](/images/Screenshot%202025-11-29%20000221.png)
+![bill2](/images/Screenshot%202025-11-29%20000238.png)
 
 ✨ Features
 🔧 Core Hardware
