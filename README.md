@@ -1,122 +1,168 @@
-# SIMPLE FLIGHT CONTROLLER
+# Single Flight Controller (SFC) – Project Documentation
 
-SFC is a DIY-friendly flight controller designed for makers, students, and hobbyists who want to learn how real FCs work or build their own drone/robotic autopilot from scratch.
-The board integrates the essential sensors and power systems required for stabilizing multirotors, fixed-wing aircraft, and autonomous ground vehicles.
+This repository contains the design files, schematic, and explanation for my custom Single Flight Controller (SFC). The goal of this project was to create a compact, modular, and fully functional flight controller with built-in sensors, logging capability, and support for standard RC aircraft peripherals. This design was heavily inspired by Hack Club’s Guided Project: SFC.
 
-This project includes:
-
-Full schematic (KiCad)
 ![Schematic](/images/schematic.png)
 
-Board layout
-![3d](/images/Screenshot%202025-11-28%20233438.png)
+![PCB](/images/pcb.png)
 
-Bill of materials
-![bill1](/images/Screenshot%202025-11-29%20000221.png)
-![bill2](/images/Screenshot%202025-11-29%20000238.png)
+![Bill](/images/image.png)
 
-✨ Features
-🔧 Core Hardware
+## Overview
 
-STM32F7 MCU
-High-performance ARM Cortex-M7 processor with FPU and fast peripherals.
+This flight controller integrates all the essential modules required for basic autonomous flight experimentation on a single PCB. It includes computation, sensing, logging, and connectivity features normally spread across multiple boards.
 
-ICM-42605 6-Axis IMU
-High-speed SPI gyro/accelerometer suitable for flight control loops.
+The system is built around an STM32 microcontroller, with supporting components for power regulation, sensor interfacing, GPS reception, and servo control.
 
-BMP/BME280 Barometer
-Accurate altitude measurement for autonomous flight modes.
+---
 
-MicroSD Card (SPI)
-Blackbox logging of flight data at high frequency.
+## Features
 
-### 🛰️ GPS & Compass Support
+### 1. Microcontroller
 
-Compatible with:
+The design centers around an STM32F722RETx MCU. It provides high-speed processing, multiple UART/SPI/I2C peripherals, and enough GPIO pins for sensors and servo output.
 
-UBLOX M8/M9 series GPS
+### 2. Four 3-Pin Servo Connectors
 
-QMC5883L / HMC5883L compass modules
+The board includes four standard 3-pin (Signal, 5V, GND) servo output connectors.
+These can be used for:
 
-Standard 5V UART GPS interface
+* Control surfaces (aileron, elevator, rudder)
+* Throttle signal
+* Or any PWM-output peripheral
 
-External magnetometer via I²C
+The PCB includes appropriate decoupling capacitors and routing to ensure clean, low-noise PWM signals.
 
-### ⚡ Power System
+### 3. UART Port
 
-5V Buck-Boost Regulator
-Stable 5V output for GPS, receiver, and accessories.
+A dedicated UART port is broken out on the PCB.
+This can be used for:
 
-3.3V LDO Regulator
-Clean analog power for IMU, barometer, and MCU.
+* Telemetry modules
+* Debug serial output
+* External communication
+* RC Receiver (if using SBUS or another serial protocol)
 
-VBAT and Current Sense (optional)
-Battery voltage monitoring for OSD/telemetry.
+### 4. Built-In Sensors and Modules
 
-Noise-Isolated IMU Power
-Ferrite bead + decoupling = reduced gyro jitter.
+#### GPS Module: u-blox Neo-M9N
 
-### 🌀 Servo Outputs
+A high-performance GNSS receiver is integrated directly onto the PCB.
+Features include:
 
-4× Servo outputs (for gimbal, fixed-wing, or robotics)
+* Fast acquisition
+* High update rate options
+* Reliable lock in outdoor flight conditions
+* Direct UART communication with the STM32
 
-### 📡 Connectivity
+#### Barometer
 
-USB-C for flashing firmware and debugging
+The barometer module (BMP-series) provides altitude estimation for stability and navigation algorithms.
+It interfaces over I2C and includes proper filtering capacitors for noise reduction.
 
-2× UARTs (GPS, receiver, telemetry)
+#### Accelerometer and Temperature Sensor
 
-I²C for compass, peripherals
+An onboard IMU provides acceleration data for movement detection and flight stabilization.
+Temperature reading is also used internally by IMUs to compensate sensor drift.
 
-SPI for IMU & SD card
+### 5. SD Card Slot for Data Logging
 
-Boot & Reset buttons
+The board includes a microSD card slot for logging flight data such as:
 
-### 🧭 Intended Uses
+* GPS coordinates
+* Barometric altitude
+* Acceleration
+* Temperature
+* System debug information
 
-SFC can be used for:
+The microcontroller communicates with the SD card via SPI.
 
-✔️ RC Multirotors
+### 6. Power Management
 
-Quadcopters, tri-copters, experimental airframes.
+The design includes onboard regulators and filtering stages to provide stable supplies for:
 
-✔️ Fixed-Wing Aircraft
+* 5V rail (servos and peripherals)
+* 3.3V rail (MCU, sensors, GPS)
+* Noise isolation between digital and analog sections
 
-Servos + GPS + barometer for autonomous flight.
+---
 
-✔️ Ground Robots
+## How the Flight Controller Was Designed
 
-Small rovers, mapping robots, GPS-guided platforms.
+### Schematic Stage
 
-✔️ Research & Education
+I began by identifying the essential modules needed for the first version of the flight controller. I collected reference designs from datasheets and existing open-source boards, then arranged everything into a master schematic. Each module was divided into blocks:
 
-Sensor fusion, flight control algorithms, blackbox logging.
+* MCU core section
+* Power regulation
+* Servo outputs
+* GPS
+* Sensors (Barometer + IMU)
+* SD card interface
+* UART and additional connectors
+
+I ensured all power, ground, and communication lines were properly labeled and referenced across schematic pages.
+
+### PCB Routing
+
+This was the most challenging part of the entire project.
+
+#### Challenges Faced
+
+1. **Dense routing around the STM32F7 MCU**
+   The microcontroller has many high-speed pins in tight clusters. Routing SPI, I2C, UART, SWD, and PWM signals without crossing too many traces was difficult.
+
+2. **Interference concerns between GPS and digital signals**
+   GPS modules are sensitive to noise. Keeping the antenna section clean required careful placement and ground-plane management.
+
+3. **Power distribution**
+   Servos can draw significant current. Ensuring thick enough traces and minimizing voltage drops was a challenge.
+
+4. **SD Card signal integrity**
+   SPI lines need clean routing and matched lengths to avoid read/write instability. I had to reroute multiple times to avoid crosstalk.
+
+5. **Fitting everything on a reasonable board size**
+   With multiple connectors, sensors, and the MCU, arranging components efficiently took several iterations.
+
+### What I Learned
+
+1. **Importance of reference designs**
+   Studying vendor schematics helped avoid basic mistakes, especially with decoupling and pull-up requirements.
+
+2. **Routing strategy matters**
+   Planning major traces (power rails, GPS lines, SD card lines) before others saves time.
+
+3. **Decoupling capacitors are not optional**
+   Correct placement greatly affected reliability during testing.
+
+4. **Grounding techniques for mixed-signal boards**
+   Separating analog and digital grounds and using ground pours improved noise performance.
+
+5. **Iterative design is normal**
+   The first layout is rarely perfect. Revision cycles teach you more than documentation ever will.
+
+---
+
+## Reference
+
+This project was inspired by and based on concepts from Hack Club’s Guided Project: Single Flight Controller (SFC).
+
+Their documentation, examples, and approach helped me understand:
+
+* How to break complex designs into modular blocks
+* Good PCB routing practices
+* How sensing modules interact on a flight controller
+* The importance of logging and debugging tools
+
+---
+
+## Conclusion
+
+This Single Flight Controller is the result of combining research, reference designs, and hands-on PCB design practice. With integrated GPS, IMU, barometer, servo outputs, UART, and SD card logging on one board, it serves as a compact platform for experimenting with flight algorithms and embedded systems.
 
 
-### 📐 Hardware Block Diagram
-        ┌────────────────────────────┐
-        │            SFC             │
-        │                            │
-        │ STM32F7 MCU                │
-        │  ├─ IMU (SPI)              │
-        │  ├─ Barometer (I²C)        │
-        │  ├─ GPS (UART)             │
-        │  ├─ SD Card (SPI)          │
-        │  ├─ Receiver (UART/I²C)    │
-        │  └─ Motor Outputs (PWM)    │
-        │                            │
-        │ Power                      │
-        │  ├─ 5V Buck-Boost          │
-        │  └─ 3.3V LDO               │
-        └────────────────────────────┘
+Note: 
+Due to unavaiable components on JLCPCB i would request to get tickets instead of the PCB.
 
-### 🧩 Repository Structure
-/hardware
-   ├─ SimpleFlightController.kicad_sch
-   ├─ SimpleFlightController.kicad_pcb
-   └─ BOM.csv
-
-### 📄 License
-
-This project is 100% open-source under the MIT License.
-Use it, modify it, and contribute improvements!
+Thank You,
+Shlok Vaidya
